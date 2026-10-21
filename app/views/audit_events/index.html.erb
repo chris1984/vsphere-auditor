@@ -1,0 +1,73 @@
+<div class="page-header">
+  <h1>Audit Events</h1>
+  <p><%= @pagy.count %> events total</p>
+</div>
+
+<%= form_tag audit_events_path, method: :get, class: "filters" do %>
+  <div class="filter-group">
+    <%= label_tag :category, "Category" %>
+    <%= select_tag :category, options_for_select([["All Categories", ""]] + @filter_options[:categories].map { |c| [c.titleize, c] }, params[:category]) %>
+  </div>
+  <div class="filter-group">
+    <%= label_tag :username, "User" %>
+    <%= select_tag :username, options_for_select([["All Users", ""]] + @filter_options[:usernames], params[:username]) %>
+  </div>
+  <div class="filter-group">
+    <%= label_tag :object_type, "Object Type" %>
+    <%= select_tag :object_type, options_for_select([["All Types", ""]] + @filter_options[:object_types], params[:object_type]) %>
+  </div>
+  <div class="filter-group">
+    <%= label_tag :severity, "Severity" %>
+    <%= select_tag :severity, options_for_select([["All", ""]] + @filter_options[:severities].map { |s| [s.upcase, s] }, params[:severity]) %>
+  </div>
+  <div class="filter-group">
+    <%= label_tag :from, "From" %>
+    <%= date_field_tag :from, params[:from] %>
+  </div>
+  <div class="filter-group">
+    <%= label_tag :to, "To" %>
+    <%= date_field_tag :to, params[:to] %>
+  </div>
+  <div class="filter-group">
+    <%= submit_tag "Filter", class: "btn btn-primary" %>
+    <%= link_to "Clear", audit_events_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
+
+<div class="card">
+  <div class="card-body table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Severity</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Object</th>
+          <th>User</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @events.each do |event| %>
+          <tr>
+            <td><%= event.event_timestamp&.strftime("%Y-%m-%d %H:%M:%S") %></td>
+            <td><%= severity_badge(event.severity) %></td>
+            <td><%= link_to event.event_type, audit_event_path(event) %></td>
+            <td><%= category_label(event.event_category) %></td>
+            <td><%= event.object_name %></td>
+            <td><%= event.username %></td>
+            <td><%= truncate(event.message, length: 80) %></td>
+          </tr>
+        <% end %>
+        <% if @events.empty? %>
+          <tr><td colspan="7">No events match the selected filters.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="pagy">
+  <%== pagy_nav(@pagy) %>
+</div>

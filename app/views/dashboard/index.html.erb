@@ -1,0 +1,124 @@
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <p>vSphere environment overview</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="value"><%= @total_events %></div>
+    <div class="label">Total Events</div>
+  </div>
+  <div class="stat-card">
+    <div class="value"><%= @events_today %></div>
+    <div class="label">Today</div>
+  </div>
+  <div class="stat-card">
+    <div class="value"><%= @events_this_week %></div>
+    <div class="label">This Week</div>
+  </div>
+  <div class="stat-card">
+    <div class="value"><%= @recent_warnings.size %></div>
+    <div class="label">Recent Warnings</div>
+  </div>
+</div>
+
+<% if @recent_warnings.any? %>
+  <div class="card">
+    <div class="card-header">Recent Warnings &amp; Errors</div>
+    <div class="card-body table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Severity</th>
+            <th>Type</th>
+            <th>Object</th>
+            <th>User</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @recent_warnings.each do |event| %>
+            <tr>
+              <td><%= time_ago_brief(event.event_timestamp) %></td>
+              <td><%= severity_badge(event.severity) %></td>
+              <td><%= link_to event.event_type, audit_event_path(event) %></td>
+              <td><%= event.object_name %></td>
+              <td><%= event.username %></td>
+              <td><%= truncate(event.message, length: 80) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>
+
+<div class="two-col">
+  <div class="card">
+    <div class="card-header">Activity by Category (7 days)</div>
+    <div class="card-body">
+      <ul class="breakdown-list">
+        <% @by_category.each do |category, count| %>
+          <li>
+            <span><%= category_label(category) %></span>
+            <span class="count"><%= count %></span>
+          </li>
+        <% end %>
+        <% if @by_category.empty? %>
+          <li><span>No events recorded yet</span></li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Activity by User (7 days)</div>
+    <div class="card-body">
+      <ul class="breakdown-list">
+        <% @by_user.each do |user, count| %>
+          <li>
+            <span><%= user %></span>
+            <span class="count"><%= count %></span>
+          </li>
+        <% end %>
+        <% if @by_user.empty? %>
+          <li><span>No events recorded yet</span></li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Recent Events</div>
+  <div class="card-body table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Object</th>
+          <th>User</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @recent_events.each do |event| %>
+          <tr>
+            <td><%= time_ago_brief(event.event_timestamp) %></td>
+            <td><%= link_to event.event_type, audit_event_path(event) %></td>
+            <td><%= category_label(event.event_category) %></td>
+            <td><%= event.object_name %></td>
+            <td><%= event.username %></td>
+            <td><%= truncate(event.message, length: 80) %></td>
+          </tr>
+        <% end %>
+        <% if @recent_events.empty? %>
+          <tr><td colspan="6">No events recorded yet. The collector will start pulling events from vCenter automatically.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
