@@ -32,6 +32,9 @@ class AuditEvent < ApplicationRecord
     "ExitMaintenanceModeEvent" => "host",
     "HostConnectionLostEvent" => "host",
     "HostReconnectionEvent" => "host",
+    "FolderCreatedEvent" => "folder",
+    "FolderRenamedEvent" => "folder",
+    "FolderRemovedEvent" => "folder",
     "TaskEvent" => "task",
     "EventEx" => "other"
   }.freeze
@@ -50,19 +53,53 @@ class AuditEvent < ApplicationRecord
   }
   scope :recent, -> { order(event_timestamp: :desc) }
 
-  def self.category_for(event_type)
-    CATEGORIES[event_type] || "other"
+  TASK_MESSAGE_CATEGORIES = {
+    /snapshot/i => "vm_snapshot",
+    /power\s*(on|off)/i => "vm_power",
+    /reset.*virtual\s*machine/i => "vm_power",
+    /suspend.*virtual\s*machine/i => "vm_power",
+    /create.*virtual\s*machine/i => "vm_lifecycle",
+    /clone.*virtual\s*machine/i => "vm_lifecycle",
+    /deploy/i => "vm_lifecycle",
+    /delete.*virtual\s*machine/i => "vm_lifecycle",
+    /destroy/i => "vm_lifecycle",
+    /reconfigure/i => "vm_config",
+    /rename/i => "vm_config",
+    /migrate/i => "vm_config",
+    /relocate/i => "vm_config",
+    /maintenance\s*mode/i => "host",
+    /create.*folder/i => "folder",
+    /rename.*folder/i => "folder",
+    /delete.*folder/i => "folder",
+    /remove.*folder/i => "folder",
+  }.freeze
+
+  def self.category_for(event_type, message = nil)
+    direct = CATEGORIES[event_type]
+    return direct if direct && direct != "task"
+
+    if (event_type == "TaskEvent" || direct == "task") && message.present?
+      TASK_MESSAGE_CATEGORIES.each do |pattern, category|
+        return category if message.match?(pattern)
+      end
+    end
+
+    direct || "other"
   end
 
-  def self.severity_for(event_type)
+  def self.severity_for(event_type, message = nil)
     case event_type
     when /Bad.*Session/, /ConnectionLost/
       "warning"
-    when /Removed/, /Deleted/, /Reset/
+    when /Snapshot/, /Removed/, /Deleted/, /Reset/
       "warning"
     when /Error/
       "error"
     else
+      if message.present?
+        return "warning" if message.match?(/snapshot/i)
+        return "warning" if message.match?(/delet|destroy|remov/i)
+      end
       "info"
     end
   end

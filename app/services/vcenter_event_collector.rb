@@ -43,16 +43,17 @@ class VcenterEventCollector
     )
 
     collector = event_manager.CreateCollectorForEvents(filter: filter_spec)
-    collector.SetCollectorPageSize(page: BATCH_SIZE)
 
     events = []
-    loop do
-      page = collector.ReadNextEvents(maxCount: BATCH_SIZE)
-      break if page.empty?
-      events.concat(page.reject { |e| e.key <= after_key })
+    begin
+      loop do
+        page = collector.ReadNextEvents(maxCount: BATCH_SIZE)
+        break if page.empty?
+        events.concat(page.reject { |e| e.key <= after_key })
+      end
+    ensure
+      collector.DestroyCollector
     end
-
-    collector.DestroyCollector
     events
   end
 
@@ -61,17 +62,18 @@ class VcenterEventCollector
     events.each do |event|
       next if AuditEvent.exists?(vcenter_event_key: event.key)
 
+      message = event.fullFormattedMessage
       AuditEvent.create!(
         event_type: event.class.wsdl_name,
-        event_category: AuditEvent.category_for(event.class.wsdl_name),
+        event_category: AuditEvent.category_for(event.class.wsdl_name, message),
         object_type: extract_object_type(event),
         object_name: extract_object_name(event),
         object_ref: extract_object_ref(event),
         username: event.userName,
-        message: event.fullFormattedMessage,
+        message: message,
         old_value: extract_change_value(event, :old),
         new_value: extract_change_value(event, :new),
-        severity: AuditEvent.severity_for(event.class.wsdl_name),
+        severity: AuditEvent.severity_for(event.class.wsdl_name, message),
         vcenter_event_key: event.key,
         vcenter_chain_id: event.chainId,
         event_timestamp: event.createdTime
@@ -90,6 +92,8 @@ class VcenterEventCollector
       "Datastore"
     elsif event.respond_to?(:net) && event.net
       "Network"
+    elsif event.respond_to?(:folder) && event.folder
+      "Folder"
     else
       "Unknown"
     end
@@ -104,6 +108,8 @@ class VcenterEventCollector
       event.ds.name
     elsif event.respond_to?(:net) && event.net
       event.net.name
+    elsif event.respond_to?(:folder) && event.folder
+      event.folder.name
     else
       nil
     end
