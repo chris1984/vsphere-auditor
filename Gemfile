@@ -43,6 +43,9 @@ gem "rbvmomi2"
 # Pagination
 gem "pagy", "~> 9.0"
 
+# CSV support (removed from Ruby 3.4 stdlib)
+gem "csv"
+
 # Load environment variables from .env
 gem "dotenv-rails"
 
@@ -58,6 +61,8 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  gem "mocha"
 end
 
 group :development do
