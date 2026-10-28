@@ -1,0 +1,71 @@
+<div class="page-header">
+  <h1>System Status</h1>
+  <p>Service health, collection stats, and database info</p>
+</div>
+
+<div class="card">
+  <div class="card-header">Service Status</div>
+  <div class="card-body">
+    <div class="status-grid">
+      <% @services.each do |name, check| %>
+        <div class="status-item">
+          <div class="status-indicator status-<%= check[:status] %>"></div>
+          <div class="status-info">
+            <div class="status-name"><%= name.to_s.titleize %></div>
+            <div class="status-detail"><%= check[:detail] %></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <div class="card-header">Collection Stats</div>
+    <div class="card-body">
+      <dl class="status-dl">
+        <dt>Last Collection</dt>
+        <dd>
+          <% if @collection_stats[:last_collection] %>
+            <%= time_ago_in_words(@collection_stats[:last_collection]) %> ago
+            <span class="status-detail">(<%= @collection_stats[:last_collection].strftime("%Y-%m-%d %H:%M:%S %Z") %>)</span>
+          <% else %>
+            No events collected yet
+          <% end %>
+        </dd>
+
+        <dt>Events (Last 24h)</dt>
+        <dd><%= @collection_stats[:events_24h] %></dd>
+
+        <dt>Failed Collection Jobs</dt>
+        <dd>
+          <% if @collection_stats[:failed_jobs] > 0 %>
+            <span class="text-danger"><%= @collection_stats[:failed_jobs] %></span>
+          <% else %>
+            <span class="text-success">0</span>
+          <% end %>
+        </dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Database</div>
+    <div class="card-body">
+      <dl class="status-dl">
+        <dt>Total Events</dt>
+        <dd><%= number_with_delimiter(@database_stats[:total_events]) %></dd>
+
+        <dt>Oldest Event</dt>
+        <dd><%= @database_stats[:oldest_event]&.strftime("%Y-%m-%d %H:%M") || "N/A" %></dd>
+
+        <dt>Newest Event</dt>
+        <dd><%= @database_stats[:newest_event]&.strftime("%Y-%m-%d %H:%M") || "N/A" %></dd>
+
+        <dt>Database Size</dt>
+        <dd><%= @database_stats[:database_size] %></dd>
+      </dl>
+    </div>
+  </div>
+</div>

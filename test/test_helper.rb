@@ -2,6 +2,8 @@ ENV["RAILS_ENV"] ||= "test"
 ENV["VCENTER_HOST"] ||= "vcenter.test.local"
 ENV["VCENTER_USER"] ||= "testuser"
 ENV["VCENTER_PASSWORD"] ||= "testpass"
+ENV.delete("AUTH_USERNAME")
+ENV.delete("AUTH_PASSWORD")
 
 require_relative "../config/environment"
 require "rails/test_help"

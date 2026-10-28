@@ -17,6 +17,7 @@
         <ul class="sidebar-nav">
           <li><%= link_to "Dashboard", root_path, class: ("active" if controller_name == "dashboard") %></li>
           <li><%= link_to "Audit Events", audit_events_path, class: ("active" if controller_name == "audit_events") %></li>
+          <li><%= link_to "System Status", system_status_path, class: ("active" if controller_name == "system_status") %></li>
         </ul>
       </nav>
       <main class="main-content">
