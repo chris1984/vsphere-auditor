@@ -31,6 +31,7 @@
   <div class="filter-group">
     <%= submit_tag "Filter", class: "btn btn-primary" %>
     <%= link_to "Clear", audit_events_path, class: "btn btn-secondary" %>
+    <%= link_to "Export CSV", audit_events_path(params.permit(:category, :username, :object_type, :severity, :from, :to).merge(format: :csv)), class: "btn btn-secondary" %>
   </div>
 <% end %>
 
