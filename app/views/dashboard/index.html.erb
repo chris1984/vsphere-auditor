@@ -62,7 +62,7 @@
         <% @by_category.each do |category, count| %>
           <li>
             <span><%= category_label(category) %></span>
-            <span class="count"><%= count %></span>
+            <span class="count"><%= link_to count, audit_events_path(category: category, from: 7.days.ago.to_date) %></span>
           </li>
         <% end %>
         <% if @by_category.empty? %>
@@ -79,7 +79,7 @@
         <% @by_user.each do |user, count| %>
           <li>
             <span><%= user %></span>
-            <span class="count"><%= count %></span>
+            <span class="count"><%= link_to count, audit_events_path(username: user, from: 7.days.ago.to_date) %></span>
           </li>
         <% end %>
         <% if @by_user.empty? %>
