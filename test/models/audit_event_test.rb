@@ -24,6 +24,9 @@ class AuditEventTest < ActiveSupport::TestCase
     assert_equal "vm_lifecycle", AuditEvent.category_for("TaskEvent", "Task: Deploy OVF template")
     assert_equal "vm_config", AuditEvent.category_for("TaskEvent", "Task: Reconfigure virtual machine")
     assert_equal "host", AuditEvent.category_for("TaskEvent", "Task: Enter maintenance mode")
+    assert_equal "network", AuditEvent.category_for("TaskEvent", "Task: Update network configuration")
+    assert_equal "network", AuditEvent.category_for("TaskEvent", "Task: Add port group")
+    assert_equal "network", AuditEvent.category_for("TaskEvent", "Task: Remove vSwitch")
     assert_equal "folder", AuditEvent.category_for("TaskEvent", "Task: Create folder")
   end
 
