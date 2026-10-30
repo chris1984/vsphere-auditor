@@ -5,6 +5,9 @@ class SystemStatusController < ApplicationController
     @database_stats = database_stats
     @alert_stats = alert_stats
     @scheduled_jobs = scheduled_jobs
+    @app_stats = app_stats
+    @retention_stats = retention_stats
+    @event_sparkline = event_sparkline
   end
 
   private
@@ -12,7 +15,8 @@ class SystemStatusController < ApplicationController
   def check_services
     checks = {}
 
-    checks[:rails] = { status: :ok, detail: "Running (#{Rails.env})" }
+    uptime = Time.current - Rails.application.config.app_boot_time
+    checks[:rails] = { status: :ok, detail: "Running (#{Rails.env}) — up #{format_duration(uptime)}" }
 
     checks[:postgresql] = begin
       ActiveRecord::Base.connection.execute("SELECT 1")
@@ -219,5 +223,97 @@ class SystemStatusController < ApplicationController
     { completed_at: job.finished_at, created_at: job.created_at }
   rescue
     nil
+  end
+
+  def app_stats
+    avg_response = begin
+      if defined?(ActiveSupport::Notifications)
+        times = Rails.cache.read("response_times") || []
+        times.any? ? (times.sum / times.size).round(1) : nil
+      end
+    rescue
+      nil
+    end
+
+    collection_durations = begin
+      if defined?(SolidQueue)
+        ActiveRecord::Base.connection_pool.with_connection do |conn|
+          conn.transaction(requires_new: true) do
+            jobs = SolidQueue::Job
+              .where(class_name: "CollectEventsJob")
+              .where.not(finished_at: nil)
+              .order(finished_at: :desc)
+              .limit(10)
+              .pluck(:created_at, :finished_at)
+
+            if jobs.any?
+              durations = jobs.map { |c, f| f - c }
+              { avg: durations.sum / durations.size, last: durations.first }
+            end
+          end
+        end
+      end
+    rescue
+      nil
+    end
+
+    { avg_response: avg_response, collection_durations: collection_durations }
+  end
+
+  def retention_stats
+    months = ENV.fetch("RETENTION_MONTHS", "12").to_i
+    cutoff = months.months.ago
+    eligible = begin
+      ActiveRecord::Base.connection_pool.with_connection do |conn|
+        conn.transaction(requires_new: true) do
+          AuditEvent.where("event_timestamp < ?", cutoff).count
+        end
+      end
+    rescue
+      0
+    end
+
+    next_purge = begin
+      if defined?(SolidQueue)
+        ActiveRecord::Base.connection_pool.with_connection do |conn|
+          conn.transaction(requires_new: true) do
+            task = SolidQueue::RecurringTask.find_by(key: "purge_old_events")
+            task&.next_time
+          end
+        end
+      end
+    rescue
+      nil
+    end
+
+    { months: months, eligible_count: eligible, next_purge: next_purge }
+  end
+
+  def event_sparkline
+    7.downto(0).map do |days_ago|
+      date = days_ago.days.ago.to_date
+      count = begin
+        ActiveRecord::Base.connection_pool.with_connection do |conn|
+          conn.transaction(requires_new: true) do
+            AuditEvent.where(event_timestamp: date.beginning_of_day..date.end_of_day).count
+          end
+        end
+      rescue
+        0
+      end
+      { date: date, count: count }
+    end
+  end
+
+  def format_duration(seconds)
+    days = (seconds / 86400).to_i
+    hours = ((seconds % 86400) / 3600).to_i
+    minutes = ((seconds % 3600) / 60).to_i
+
+    parts = []
+    parts << "#{days}d" if days > 0
+    parts << "#{hours}h" if hours > 0
+    parts << "#{minutes}m" if minutes > 0
+    parts.empty? ? "< 1m" : parts.join(" ")
   end
 end

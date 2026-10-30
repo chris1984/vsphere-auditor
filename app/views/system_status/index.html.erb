@@ -20,6 +20,24 @@
   </div>
 </div>
 
+<% if @event_sparkline.any? %>
+  <div class="card">
+    <div class="card-header">Event Activity (Last 7 Days)</div>
+    <div class="card-body">
+      <div class="sparkline-container">
+        <% max_count = [@event_sparkline.map { |d| d[:count] }.max, 1].max %>
+        <% @event_sparkline.each do |day| %>
+          <div class="sparkline-bar-wrapper">
+            <div class="sparkline-count"><%= day[:count] %></div>
+            <div class="sparkline-bar" style="height: <%= (day[:count].to_f / max_count * 100).round %>%"></div>
+            <div class="sparkline-label"><%= day[:date].strftime("%a") %></div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
+
 <div class="two-col">
   <div class="card">
     <div class="card-header">Collection Stats</div>
@@ -49,6 +67,14 @@
             No events yet
           <% end %>
         </dd>
+
+        <% if @app_stats[:collection_durations] %>
+          <dt>Avg Collection Time</dt>
+          <dd><%= @app_stats[:collection_durations][:avg].round(1) %>s</dd>
+
+          <dt>Last Collection Time</dt>
+          <dd><%= @app_stats[:collection_durations][:last].round(1) %>s</dd>
+        <% end %>
 
         <dt>Failed Collection Jobs</dt>
         <dd>
@@ -80,6 +106,35 @@
 </div>
 
 <div class="two-col">
+  <div class="card">
+    <div class="card-header">Data Retention</div>
+    <div class="card-body">
+      <dl class="status-dl">
+        <dt>Retention Period</dt>
+        <dd><%= @retention_stats[:months] %> months</dd>
+
+        <dt>Events Eligible for Purge</dt>
+        <dd>
+          <% if @retention_stats[:eligible_count] > 0 %>
+            <span class="text-danger"><%= number_with_delimiter(@retention_stats[:eligible_count]) %></span>
+          <% else %>
+            <span class="text-success">0</span>
+          <% end %>
+        </dd>
+
+        <dt>Next Scheduled Purge</dt>
+        <dd>
+          <% if @retention_stats[:next_purge] %>
+            <%= @retention_stats[:next_purge].strftime("%Y-%m-%d %H:%M") %>
+            <span class="status-detail">(<%= time_ago_in_words(@retention_stats[:next_purge]) %>)</span>
+          <% else %>
+            N/A
+          <% end %>
+        </dd>
+      </dl>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-header">Database</div>
     <div class="card-body">
@@ -123,39 +178,39 @@
       <% end %>
     </div>
   </div>
+</div>
 
-  <div class="card">
-    <div class="card-header">Scheduled Jobs</div>
-    <div class="card-body">
-      <% if @scheduled_jobs.any? %>
-        <table>
-          <thead>
+<div class="card">
+  <div class="card-header">Scheduled Jobs</div>
+  <div class="card-body">
+    <% if @scheduled_jobs.any? %>
+      <table>
+        <thead>
+          <tr>
+            <th>Job</th>
+            <th>Schedule</th>
+            <th>Next Run</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @scheduled_jobs.each do |job| %>
             <tr>
-              <th>Job</th>
-              <th>Schedule</th>
-              <th>Next Run</th>
+              <td><%= job[:class_name] || job[:key] %></td>
+              <td><code><%= job[:schedule] %></code></td>
+              <td>
+                <% if job[:next_run] %>
+                  <%= time_ago_in_words(job[:next_run]) %>
+                  <span class="status-detail">(<%= job[:next_run].strftime("%H:%M:%S") %>)</span>
+                <% else %>
+                  N/A
+                <% end %>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            <% @scheduled_jobs.each do |job| %>
-              <tr>
-                <td><%= job[:class_name] || job[:key] %></td>
-                <td><code><%= job[:schedule] %></code></td>
-                <td>
-                  <% if job[:next_run] %>
-                    <%= time_ago_in_words(job[:next_run]) %>
-                    <span class="status-detail">(<%= job[:next_run].strftime("%H:%M:%S") %>)</span>
-                  <% else %>
-                    N/A
-                  <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      <% else %>
-        <p>No scheduled jobs found. Is Solid Queue running?</p>
-      <% end %>
-    </div>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p>No scheduled jobs found. Is Solid Queue running?</p>
+    <% end %>
   </div>
 </div>
