@@ -4,15 +4,15 @@ collect_vcenter_events:
 
 send_daily_report:
   class: DailyReportJob
-  schedule: at 7am every day
+  schedule: "0 7 * * *"
 
 send_weekly_report:
   class: WeeklyReportJob
-  schedule: at 7am on Monday
+  schedule: "0 7 * * 1"
 
 purge_old_events:
   class: DataRetentionJob
-  schedule: at 2am on the 1st of every month
+  schedule: "0 2 1 * *"
 
 production:
   collect_vcenter_events:
@@ -21,16 +21,16 @@ production:
 
   send_daily_report:
     class: DailyReportJob
-    schedule: at 7am every day
+    schedule: "0 7 * * *"
 
   send_weekly_report:
     class: WeeklyReportJob
-    schedule: at 7am on Monday
+    schedule: "0 7 * * 1"
 
   purge_old_events:
     class: DataRetentionJob
-    schedule: at 2am on the 1st of every month
+    schedule: "0 2 1 * *"
 
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
-    schedule: every hour at minute 12
+    schedule: "12 * * * *"
