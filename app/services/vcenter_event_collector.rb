@@ -63,7 +63,7 @@ class VcenterEventCollector
       next if AuditEvent.exists?(vcenter_event_key: event.key)
 
       message = event.fullFormattedMessage
-      AuditEvent.create!(
+      audit_event = AuditEvent.create!(
         event_type: event.class.wsdl_name,
         event_category: AuditEvent.category_for(event.class.wsdl_name, message),
         object_type: extract_object_type(event),
@@ -78,6 +78,7 @@ class VcenterEventCollector
         vcenter_chain_id: event.chainId,
         event_timestamp: event.createdTime
       )
+      check_alert_rules(audit_event)
       count += 1
     end
     count
@@ -137,5 +138,15 @@ class VcenterEventCollector
       changes << "#{prop}: #{val}"
     end
     direction == :new ? changes.join("\n") : nil
+  end
+
+  def check_alert_rules(audit_event)
+    AlertRule.active.each do |rule|
+      if rule.matches?(audit_event)
+        AlertMailer.event_alert(rule, audit_event).deliver_later
+      end
+    end
+  rescue => e
+    Rails.logger.error "AlertRule check failed: #{e.message}"
   end
 end

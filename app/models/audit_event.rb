@@ -51,6 +51,9 @@ class AuditEvent < ApplicationRecord
     scope = scope.where("event_timestamp <= ?", to) if to.present?
     scope
   }
+  scope :search, ->(query) {
+    where("message ILIKE :q OR event_type ILIKE :q OR object_name ILIKE :q OR username ILIKE :q", q: "%#{sanitize_sql_like(query)}%") if query.present?
+  }
   scope :recent, -> { order(event_timestamp: :desc) }
 
   TASK_MESSAGE_CATEGORIES = {

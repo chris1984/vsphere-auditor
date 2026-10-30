@@ -1,0 +1,50 @@
+<div class="page-header">
+  <h1>Alert Rules</h1>
+  <p>Configure real-time email alerts for specific events</p>
+</div>
+
+<div style="margin-bottom: 15px;">
+  <%= link_to "New Alert Rule", new_alert_rule_path, class: "btn btn-primary" %>
+</div>
+
+<% if @alert_rules.any? %>
+  <div class="card">
+    <div class="card-body table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Severity</th>
+            <th>User Match</th>
+            <th>Recipients</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @alert_rules.each do |rule| %>
+            <tr>
+              <td><span class="badge <%= rule.enabled? ? 'badge-info' : 'badge-error' %>"><%= rule.enabled? ? "ON" : "OFF" %></span></td>
+              <td><%= rule.name %></td>
+              <td><%= rule.event_category.present? ? rule.event_category.titleize : "Any" %></td>
+              <td><%= rule.severity.present? ? rule.severity.upcase : "Any" %></td>
+              <td><%= rule.username_match.presence || "Any" %></td>
+              <td><%= rule.recipients %></td>
+              <td>
+                <%= link_to "Edit", edit_alert_rule_path(rule), class: "btn btn-secondary" %>
+                <%= link_to "Delete", alert_rule_path(rule), data: { turbo_method: :delete, turbo_confirm: "Delete this alert rule?" }, class: "btn btn-secondary" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% else %>
+  <div class="card">
+    <div class="card-body">
+      <p>No alert rules configured. Create one to receive real-time email notifications when specific events occur.</p>
+    </div>
+  </div>
+<% end %>

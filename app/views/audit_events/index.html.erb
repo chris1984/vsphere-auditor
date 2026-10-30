@@ -5,6 +5,10 @@
 
 <%= form_tag audit_events_path, method: :get, class: "filters" do %>
   <div class="filter-group">
+    <%= label_tag :q, "Search" %>
+    <%= text_field_tag :q, params[:q], placeholder: "Search events...", class: "search-input" %>
+  </div>
+  <div class="filter-group">
     <%= label_tag :category, "Category" %>
     <%= select_tag :category, options_for_select([["All Categories", ""]] + @filter_options[:categories].map { |c| [c.titleize, c] }, params[:category]) %>
   </div>
@@ -31,7 +35,7 @@
   <div class="filter-group">
     <%= submit_tag "Filter", class: "btn btn-primary" %>
     <%= link_to "Clear", audit_events_path, class: "btn btn-secondary" %>
-    <%= link_to "Export CSV", audit_events_path(params.permit(:category, :username, :object_type, :severity, :from, :to).merge(format: :csv)), class: "btn btn-secondary" %>
+    <%= link_to "Export CSV", audit_events_path(params.permit(:q, :category, :username, :object_type, :severity, :from, :to).merge(format: :csv)), class: "btn btn-secondary" %>
   </div>
 <% end %>
 

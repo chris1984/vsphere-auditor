@@ -5,6 +5,7 @@ class AuditEventsController < ApplicationController
 
   def index
     events = AuditEvent
+      .search(params[:q])
       .by_category(params[:category])
       .by_username(params[:username])
       .by_object_type(params[:object_type])
@@ -24,7 +25,7 @@ class AuditEventsController < ApplicationController
       end
       format.csv do
         filename = "audit_events_#{Date.current.iso8601}.csv"
-        send_data generate_csv(events), filename: filename, type: "text/csv"
+        send_data generate_csv(events.limit(10_000)), filename: filename, type: "text/csv"
       end
     end
   end
