@@ -451,6 +451,55 @@ tr:hover td {
   margin-bottom: 15px;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1b1e;
+    --surface: #25262b;
+    --border: #373a40;
+    --text: #c1c2c5;
+    --text-muted: #909296;
+    --primary: #748ffc;
+    --primary-light: #91a7ff;
+    --accent: #4dabf7;
+    --success: #51cf66;
+    --warning: #fcc419;
+    --danger: #ff6b6b;
+    --info: #4dabf7;
+  }
+
+  .sidebar { background: #141517; }
+  .sidebar-brand { border-bottom-color: rgba(255,255,255,0.06); }
+
+  th { background: #2c2e33; }
+  tr:hover td { background: #2c2e33; }
+  td { border-bottom-color: #373a40; }
+
+  .stat-card { background: var(--surface); }
+  .status-item { background: #2c2e33; }
+  .detail-grid dt { background: #2c2e33; }
+
+  .badge-info { background: #1c3a5e; color: var(--info); }
+  .badge-warning { background: #3d3000; color: var(--warning); }
+  .badge-error { background: #3d1010; color: var(--danger); }
+  .badge-critical { background: var(--danger); color: #fff; }
+
+  .notice { background: #1c3a5e; border-color: #2b4a6e; }
+
+  .btn-secondary { background: #373a40; color: var(--text); }
+
+  .filter-group select,
+  .filter-group input,
+  .form-group input[type="text"],
+  .form-group select {
+    background: #2c2e33;
+    border-color: #373a40;
+    color: var(--text);
+  }
+
+  .breakdown-list li { border-bottom-color: #373a40; }
+  .status-dl dt, .status-dl dd { border-bottom-color: #373a40; }
+}
+
 @media (max-width: 768px) {
   .sidebar { display: none; }
   .main-content { margin-left: 0; }
