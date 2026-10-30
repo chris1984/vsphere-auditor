@@ -81,7 +81,7 @@ class AuditEvent < ApplicationRecord
     /create.*folder/i => "folder",
     /rename.*folder/i => "folder",
     /delete.*folder/i => "folder",
-    /remove.*folder/i => "folder",
+    /remove.*folder/i => "folder"
   }.freeze
 
   def self.category_for(event_type, message = nil)

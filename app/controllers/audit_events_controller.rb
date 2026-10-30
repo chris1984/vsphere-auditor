@@ -38,8 +38,8 @@ class AuditEventsController < ApplicationController
 
   def generate_csv(events)
     CSV.generate(headers: true) do |csv|
-      csv << ["Timestamp", "Severity", "Event Type", "Category", "Object Type",
-              "Object Name", "User", "Message", "Old Value", "New Value"]
+      csv << [ "Timestamp", "Severity", "Event Type", "Category", "Object Type",
+              "Object Name", "User", "Message", "Old Value", "New Value" ]
       events.find_each do |event|
         csv << [
           event.event_timestamp&.iso8601,

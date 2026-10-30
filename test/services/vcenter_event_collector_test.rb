@@ -37,7 +37,7 @@ class VcenterEventCollectorTest < ActiveSupport::TestCase
     event2 = mock_vcenter_event(key: 1002, event_type: "VmPoweredOnEvent", message: "Powered on VM test-vm")
 
     mock_collector = mock("event_collector")
-    mock_collector.stubs(:ReadNextEvents).returns([event1, event2], [])
+    mock_collector.stubs(:ReadNextEvents).returns([ event1, event2 ], [])
     mock_collector.stubs(:DestroyCollector)
 
     mock_event_manager = mock("event_manager")
@@ -68,7 +68,7 @@ class VcenterEventCollectorTest < ActiveSupport::TestCase
     event = mock_vcenter_event(key: 2001)
 
     mock_collector = mock("event_collector")
-    mock_collector.stubs(:ReadNextEvents).returns([event], [])
+    mock_collector.stubs(:ReadNextEvents).returns([ event ], [])
     mock_collector.stubs(:DestroyCollector)
 
     mock_event_manager = mock("event_manager")
@@ -93,7 +93,7 @@ class VcenterEventCollectorTest < ActiveSupport::TestCase
     old_event = mock_vcenter_event(key: 4999)
 
     mock_collector = mock("event_collector")
-    mock_collector.stubs(:ReadNextEvents).returns([old_event], [])
+    mock_collector.stubs(:ReadNextEvents).returns([ old_event ], [])
     mock_collector.stubs(:DestroyCollector)
 
     mock_event_manager = mock("event_manager")
