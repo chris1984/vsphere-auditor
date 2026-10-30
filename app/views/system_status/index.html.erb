@@ -25,18 +25,30 @@
     <div class="card-header">Collection Stats</div>
     <div class="card-body">
       <dl class="status-dl">
-        <dt>Last Collection</dt>
+        <dt>Last Collection Run</dt>
         <dd>
           <% if @collection_stats[:last_collection] %>
-            <%= time_ago_in_words(@collection_stats[:last_collection]) %> ago
-            <span class="status-detail">(<%= @collection_stats[:last_collection].strftime("%Y-%m-%d %H:%M:%S %Z") %>)</span>
+            <%= time_ago_in_words(@collection_stats[:last_collection][:completed_at]) %> ago
+            <span class="status-detail">(<%= @collection_stats[:last_collection][:completed_at].strftime("%Y-%m-%d %H:%M:%S %Z") %>)</span>
           <% else %>
-            No events collected yet
+            No collection runs yet
           <% end %>
         </dd>
 
+        <dt>Events Last Run</dt>
+        <dd><%= @collection_stats[:events_last_run] || "N/A" %></dd>
+
         <dt>Events (Last 24h)</dt>
         <dd><%= @collection_stats[:events_24h] %></dd>
+
+        <dt>Last Event Received</dt>
+        <dd>
+          <% if @collection_stats[:last_event_at] %>
+            <%= time_ago_in_words(@collection_stats[:last_event_at]) %> ago
+          <% else %>
+            No events yet
+          <% end %>
+        </dd>
 
         <dt>Failed Collection Jobs</dt>
         <dd>
@@ -51,11 +63,32 @@
   </div>
 
   <div class="card">
+    <div class="card-header">Alert Rules</div>
+    <div class="card-body">
+      <dl class="status-dl">
+        <dt>Active Rules</dt>
+        <dd><%= @alert_stats[:active_rules] %> of <%= @alert_stats[:total_rules] %></dd>
+
+        <dt>Alerts Sent Today</dt>
+        <dd><%= @alert_stats[:alerts_today] %></dd>
+      </dl>
+      <div style="margin-top: 10px;">
+        <%= link_to "Manage Rules", alert_rules_path, class: "btn btn-secondary" %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
     <div class="card-header">Database</div>
     <div class="card-body">
       <dl class="status-dl">
         <dt>Total Events</dt>
         <dd><%= number_with_delimiter(@database_stats[:total_events]) %></dd>
+
+        <dt>Alert Rules</dt>
+        <dd><%= @database_stats[:alert_rules_count] %></dd>
 
         <dt>Oldest Event</dt>
         <dd><%= @database_stats[:oldest_event]&.strftime("%Y-%m-%d %H:%M") || "N/A" %></dd>
@@ -66,6 +99,63 @@
         <dt>Database Size</dt>
         <dd><%= @database_stats[:database_size] %></dd>
       </dl>
+
+      <% if @database_stats[:table_sizes].any? %>
+        <div class="section-title" style="font-size: 13px; font-weight: 600; margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--border);">Table Breakdown</div>
+        <table style="margin-top: 8px;">
+          <thead>
+            <tr>
+              <th>Table</th>
+              <th>Rows</th>
+              <th>Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @database_stats[:table_sizes].each do |t| %>
+              <tr>
+                <td><%= t["name"] %></td>
+                <td><%= number_with_delimiter(t["row_count"]) %></td>
+                <td><%= t["size"] %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Scheduled Jobs</div>
+    <div class="card-body">
+      <% if @scheduled_jobs.any? %>
+        <table>
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Schedule</th>
+              <th>Next Run</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @scheduled_jobs.each do |job| %>
+              <tr>
+                <td><%= job[:class_name] || job[:key] %></td>
+                <td><code><%= job[:schedule] %></code></td>
+                <td>
+                  <% if job[:next_run] %>
+                    <%= time_ago_in_words(job[:next_run]) %>
+                    <span class="status-detail">(<%= job[:next_run].strftime("%H:%M:%S") %>)</span>
+                  <% else %>
+                    N/A
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p>No scheduled jobs found. Is Solid Queue running?</p>
+      <% end %>
     </div>
   </div>
 </div>
