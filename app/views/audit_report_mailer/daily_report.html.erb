@@ -27,6 +27,14 @@
     <% if @summary[:warnings].any? %>
       <div class="section-title">Warnings &amp; Errors</div>
       <table>
+        <colgroup>
+          <col style="width: 70px">
+          <col style="width: 70px">
+          <col style="width: 160px">
+          <col style="width: 120px">
+          <col style="width: 140px">
+          <col>
+        </colgroup>
         <thead>
           <tr>
             <th>Time</th>
@@ -45,7 +53,7 @@
               <td><%= event.event_type %></td>
               <td><%= event.object_name %></td>
               <td><%= event.username %></td>
-              <td><%= truncate(event.message, length: 80) %></td>
+              <td class="wrap"><%= truncate(event.message, length: 120) %></td>
             </tr>
           <% end %>
         </tbody>
@@ -53,7 +61,7 @@
     <% end %>
 
     <div class="section-title">Activity by Category</div>
-    <table class="breakdown-table">
+    <table class="breakdown-table" style="table-layout: auto;">
       <tbody>
         <% @summary[:by_category].sort_by { |_, v| -v }.each do |category, count| %>
           <tr>
@@ -65,7 +73,7 @@
     </table>
 
     <div class="section-title">Activity by User</div>
-    <table class="breakdown-table">
+    <table class="breakdown-table" style="table-layout: auto;">
       <tbody>
         <% @summary[:by_user].sort_by { |_, v| -v }.each do |user, count| %>
           <tr>
@@ -78,6 +86,13 @@
 
     <div class="section-title">All Events</div>
     <table>
+      <colgroup>
+        <col style="width: 70px">
+        <col style="width: 160px">
+        <col style="width: 120px">
+        <col style="width: 140px">
+        <col>
+      </colgroup>
       <thead>
         <tr>
           <th>Time</th>
@@ -94,7 +109,7 @@
             <td><%= event.event_type %></td>
             <td><%= event.object_name %></td>
             <td><%= event.username %></td>
-            <td><%= truncate(event.message, length: 100) %></td>
+            <td class="wrap"><%= truncate(event.message, length: 120) %></td>
           </tr>
         <% end %>
       </tbody>
