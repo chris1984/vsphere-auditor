@@ -33,12 +33,13 @@ class AuditReportMailer < ApplicationMailer
   private
 
   def build_summary(events)
+    unordered = events.reorder("")
     {
       total: events.count,
-      by_category: events.group(:event_category).count,
-      by_severity: events.group(:severity).count,
-      by_user: events.group(:username).count,
-      by_object_type: events.group(:object_type).count,
+      by_category: unordered.group(:event_category).count,
+      by_severity: unordered.group(:severity).count,
+      by_user: unordered.group(:username).count,
+      by_object_type: unordered.group(:object_type).count,
       warnings: events.where(severity: %w[warning error critical])
     }
   end
