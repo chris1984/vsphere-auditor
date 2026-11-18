@@ -41,7 +41,7 @@ gem "thruster", require: false
 gem "rbvmomi2"
 
 # Pagination
-gem "pagy", "~> 9.0"
+gem "pagy", "~> 43.8"
 
 # CSV support (removed from Ruby 3.4 stdlib)
 gem "csv"
