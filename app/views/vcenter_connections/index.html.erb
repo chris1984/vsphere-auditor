@@ -1,0 +1,74 @@
+<div class="page-header">
+  <h1>vCenter Connections</h1>
+  <p>Manage vCenter servers to collect events from</p>
+</div>
+
+<div style="margin-bottom: 15px;">
+  <%= link_to "Add vCenter", new_vcenter_connection_path, class: "btn btn-primary" %>
+</div>
+
+<% if @connections.any? %>
+  <div class="card">
+    <div class="card-body table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Name</th>
+            <th>Host</th>
+            <th>Username</th>
+            <th>Last Collection</th>
+            <th>Events</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @connections.each do |conn| %>
+            <tr>
+              <td>
+                <% case conn.status %>
+                <% when :ok %>
+                  <span class="badge badge-info">OK</span>
+                <% when :error %>
+                  <span class="badge badge-error" title="<%= conn.last_error %>">ERROR</span>
+                <% when :disabled %>
+                  <span class="badge badge-warning">OFF</span>
+                <% when :pending %>
+                  <span class="badge badge-warning">PENDING</span>
+                <% end %>
+              </td>
+              <td><%= conn.name %></td>
+              <td><%= conn.host %></td>
+              <td><%= conn.username %></td>
+              <td>
+                <% if conn.last_collection_at %>
+                  <%= time_ago_in_words(conn.last_collection_at) %> ago
+                <% else %>
+                  Never
+                <% end %>
+              </td>
+              <td><%= conn.audit_events.count %></td>
+              <td>
+                <%= link_to "Test", test_connection_vcenter_connection_path(conn), data: { turbo_method: :post }, class: "btn btn-secondary" %>
+                <%= link_to "Edit", edit_vcenter_connection_path(conn), class: "btn btn-secondary" %>
+                <%= link_to "Delete", vcenter_connection_path(conn), data: { turbo_method: :delete, turbo_confirm: "Remove this vCenter connection? Events will be kept." }, class: "btn btn-secondary" %>
+              </td>
+            </tr>
+            <% if conn.last_error.present? %>
+              <tr>
+                <td></td>
+                <td colspan="6" style="color: var(--danger); font-size: 12px; padding-top: 0;"><%= conn.last_error %></td>
+              </tr>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% else %>
+  <div class="card">
+    <div class="card-body">
+      <p>No vCenter connections configured. Add one to start collecting events.</p>
+    </div>
+  </div>
+<% end %>

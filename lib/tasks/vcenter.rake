@@ -1,8 +1,13 @@
 namespace :vcenter do
-  desc "Collect events from vCenter now"
+  desc "Collect events from all active vCenter connections"
   task collect: :environment do
-    count = VcenterEventCollector.new.collect
-    puts "Imported #{count} events"
+    VcenterConnection.active.each do |conn|
+      print "Collecting from #{conn.display_name}... "
+      count = VcenterEventCollector.new(conn).collect
+      puts "#{count} events"
+    rescue => e
+      puts "FAILED: #{e.message}"
+    end
   end
 
   desc "Re-categorize and re-severity existing events based on message content"

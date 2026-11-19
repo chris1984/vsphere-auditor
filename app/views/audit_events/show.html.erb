@@ -6,6 +6,11 @@
 <div class="card">
   <div class="card-body">
     <dl class="detail-grid">
+      <% if @event.vcenter_connection %>
+        <dt>vCenter</dt>
+        <dd><%= @event.vcenter_connection.display_name %></dd>
+      <% end %>
+
       <dt>Event Type</dt>
       <dd><%= @event.event_type %></dd>
 

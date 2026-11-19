@@ -3,22 +3,36 @@ require "rbvmomi"
 class VcenterEventCollector
   BATCH_SIZE = 100
 
-  def initialize
-    @host = ENV.fetch("VCENTER_HOST")
-    @user = ENV.fetch("VCENTER_USER")
-    @password = ENV.fetch("VCENTER_PASSWORD")
-    @insecure = ENV.fetch("VCENTER_INSECURE", "true") == "true"
+  def initialize(vcenter_connection)
+    @connection = vcenter_connection
+    @host = vcenter_connection.host
+    @user = vcenter_connection.username
+    @password = vcenter_connection.password
+    @insecure = vcenter_connection.insecure?
+  end
+
+  def self.collect_all
+    VcenterConnection.active.find_each do |conn|
+      new(conn).collect
+    rescue => e
+      conn.record_failure!(e.message)
+      Rails.logger.error "VcenterEventCollector: failed for #{conn.display_name}: #{e.message}"
+    end
   end
 
   def collect
     connect do |vim|
       event_manager = vim.serviceContent.eventManager
-      last_key = AuditEvent.maximum(:vcenter_event_key) || 0
+      last_key = @connection.audit_events.maximum(:vcenter_event_key) || 0
       events = fetch_events(event_manager, last_key)
       imported = import_events(events)
-      Rails.logger.info "VcenterEventCollector: imported #{imported} events"
+      @connection.record_success!
+      Rails.logger.info "VcenterEventCollector: imported #{imported} events from #{@connection.display_name}"
       imported
     end
+  rescue => e
+    @connection.record_failure!(e.message)
+    raise
   end
 
   private
@@ -60,10 +74,10 @@ class VcenterEventCollector
   def import_events(events)
     count = 0
     events.each do |event|
-      next if AuditEvent.exists?(vcenter_event_key: event.key)
+      next if @connection.audit_events.exists?(vcenter_event_key: event.key)
 
       message = event.fullFormattedMessage
-      audit_event = AuditEvent.create!(
+      audit_event = @connection.audit_events.create!(
         event_type: event.class.wsdl_name,
         event_category: AuditEvent.category_for(event.class.wsdl_name, message),
         object_type: extract_object_type(event),
