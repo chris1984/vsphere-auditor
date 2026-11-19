@@ -2,7 +2,15 @@ require "test_helper"
 
 class VcenterEventCollectorTest < ActiveSupport::TestCase
   def setup
-    @collector = VcenterEventCollector.new
+    @connection = VcenterConnection.create!(
+      name: "Test vCenter",
+      host: "vcenter-#{SecureRandom.hex(4)}.test.local",
+      username: "admin@vsphere.local",
+      password: "secret",
+      insecure: true,
+      enabled: true
+    )
+    @collector = VcenterEventCollector.new(@connection)
   end
 
   def mock_vcenter_event(attrs = {})
@@ -32,12 +40,9 @@ class VcenterEventCollectorTest < ActiveSupport::TestCase
     event
   end
 
-  test "collect imports new events from vCenter" do
-    event1 = mock_vcenter_event(key: 1001, event_type: "VmCreatedEvent", message: "Created VM test-vm")
-    event2 = mock_vcenter_event(key: 1002, event_type: "VmPoweredOnEvent", message: "Powered on VM test-vm")
-
+  def stub_vim_with_events(*event_pages)
     mock_collector = mock("event_collector")
-    mock_collector.stubs(:ReadNextEvents).returns([ event1, event2 ], [])
+    mock_collector.stubs(:ReadNextEvents).returns(*event_pages, [])
     mock_collector.stubs(:DestroyCollector)
 
     mock_event_manager = mock("event_manager")
@@ -51,6 +56,13 @@ class VcenterEventCollectorTest < ActiveSupport::TestCase
     mock_vim.stubs(:close)
 
     RbVmomi::VIM.stubs(:connect).returns(mock_vim)
+  end
+
+  test "collect imports new events from vCenter" do
+    event1 = mock_vcenter_event(key: 1001, event_type: "VmCreatedEvent", message: "Created VM test-vm")
+    event2 = mock_vcenter_event(key: 1002, event_type: "VmPoweredOnEvent", message: "Powered on VM test-vm")
+
+    stub_vim_with_events([ event1, event2 ])
 
     assert_difference "AuditEvent.count", 2 do
       @collector.collect
@@ -59,29 +71,16 @@ class VcenterEventCollectorTest < ActiveSupport::TestCase
     imported = AuditEvent.order(:vcenter_event_key).last(2)
     assert_equal "VmCreatedEvent", imported.first.event_type
     assert_equal "vm_lifecycle", imported.first.event_category
+    assert_equal @connection.id, imported.first.vcenter_connection_id
     assert_equal "VmPoweredOnEvent", imported.last.event_type
     assert_equal "vm_power", imported.last.event_category
   end
 
   test "collect skips duplicate events" do
-    create_event(vcenter_event_key: 2001)
+    create_event(vcenter_event_key: 2001, vcenter_connection: @connection)
     event = mock_vcenter_event(key: 2001)
 
-    mock_collector = mock("event_collector")
-    mock_collector.stubs(:ReadNextEvents).returns([ event ], [])
-    mock_collector.stubs(:DestroyCollector)
-
-    mock_event_manager = mock("event_manager")
-    mock_event_manager.stubs(:CreateCollectorForEvents).returns(mock_collector)
-
-    mock_service_content = mock("service_content")
-    mock_service_content.stubs(:eventManager).returns(mock_event_manager)
-
-    mock_vim = mock("vim_connection")
-    mock_vim.stubs(:serviceContent).returns(mock_service_content)
-    mock_vim.stubs(:close)
-
-    RbVmomi::VIM.stubs(:connect).returns(mock_vim)
+    stub_vim_with_events([ event ])
 
     assert_no_difference "AuditEvent.count" do
       @collector.collect
@@ -89,27 +88,35 @@ class VcenterEventCollectorTest < ActiveSupport::TestCase
   end
 
   test "collect skips events with keys at or below last imported key" do
-    create_event(vcenter_event_key: 5000)
+    create_event(vcenter_event_key: 5000, vcenter_connection: @connection)
     old_event = mock_vcenter_event(key: 4999)
 
-    mock_collector = mock("event_collector")
-    mock_collector.stubs(:ReadNextEvents).returns([ old_event ], [])
-    mock_collector.stubs(:DestroyCollector)
-
-    mock_event_manager = mock("event_manager")
-    mock_event_manager.stubs(:CreateCollectorForEvents).returns(mock_collector)
-
-    mock_service_content = mock("service_content")
-    mock_service_content.stubs(:eventManager).returns(mock_event_manager)
-
-    mock_vim = mock("vim_connection")
-    mock_vim.stubs(:serviceContent).returns(mock_service_content)
-    mock_vim.stubs(:close)
-
-    RbVmomi::VIM.stubs(:connect).returns(mock_vim)
+    stub_vim_with_events([ old_event ])
 
     assert_no_difference "AuditEvent.count" do
       @collector.collect
     end
+  end
+
+  test "collect records success on connection" do
+    stub_vim_with_events([])
+    @collector.collect
+    @connection.reload
+    assert_not_nil @connection.last_collection_at
+    assert_nil @connection.last_error
+  end
+
+  test "collect records failure on connection" do
+    RbVmomi::VIM.stubs(:connect).raises(Errno::ECONNREFUSED, "Connection refused")
+    assert_raises(Errno::ECONNREFUSED) { @collector.collect }
+    @connection.reload
+    assert_match(/Connection refused/, @connection.last_error)
+  end
+
+  test "collect_all iterates active connections" do
+    stub_vim_with_events([])
+    VcenterEventCollector.collect_all
+    @connection.reload
+    assert_not_nil @connection.last_collection_at
   end
 end

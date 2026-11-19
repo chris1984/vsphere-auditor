@@ -1,4 +1,6 @@
 class AuditEvent < ApplicationRecord
+  belongs_to :vcenter_connection, optional: true
+
   CATEGORIES = {
     "VmCreatedEvent" => "vm_lifecycle",
     "VmDeployedEvent" => "vm_lifecycle",
@@ -41,6 +43,7 @@ class AuditEvent < ApplicationRecord
 
   SEVERITIES = %w[info warning error critical].freeze
 
+  scope :by_vcenter, ->(id) { where(vcenter_connection_id: id) if id.present? }
   scope :by_category, ->(cat) { where(event_category: cat) if cat.present? }
   scope :by_username, ->(user) { where(username: user) if user.present? }
   scope :by_object_type, ->(type) { where(object_type: type) if type.present? }

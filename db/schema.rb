@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_160023) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_19_170900) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -41,12 +41,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_160023) do
     t.datetime "event_timestamp"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "vcenter_connection_id"
     t.index ["event_category"], name: "index_audit_events_on_event_category"
     t.index ["event_timestamp"], name: "index_audit_events_on_event_timestamp"
     t.index ["event_type"], name: "index_audit_events_on_event_type"
     t.index ["object_type"], name: "index_audit_events_on_object_type"
     t.index ["severity"], name: "index_audit_events_on_severity"
     t.index ["username"], name: "index_audit_events_on_username"
+    t.index ["vcenter_connection_id"], name: "index_audit_events_on_vcenter_connection_id"
     t.index ["vcenter_event_key"], name: "index_audit_events_on_vcenter_event_key", unique: true
   end
 
@@ -200,6 +202,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_160023) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "vcenter_connections", force: :cascade do |t|
+    t.string "name"
+    t.string "host"
+    t.string "username"
+    t.text "encrypted_password"
+    t.boolean "insecure"
+    t.boolean "enabled", default: true
+    t.datetime "last_collection_at"
+    t.text "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["host"], name: "index_vcenter_connections_on_host", unique: true
+  end
+
+  add_foreign_key "audit_events", "vcenter_connections"
   add_foreign_key "solid_queue_batch_executions", "solid_queue_batches", column: "batch_id", on_delete: :cascade
   add_foreign_key "solid_queue_batch_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

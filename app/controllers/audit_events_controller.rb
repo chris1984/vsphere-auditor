@@ -6,6 +6,7 @@ class AuditEventsController < ApplicationController
   def index
     events = AuditEvent
       .search(params[:q])
+      .by_vcenter(params[:vcenter])
       .by_category(params[:category])
       .by_username(params[:username])
       .by_object_type(params[:object_type])
@@ -17,6 +18,7 @@ class AuditEventsController < ApplicationController
       format.html do
         @pagy, @events = pagy(events, limit: 50)
         @filter_options = {
+          vcenters: VcenterConnection.order(:name).pluck(:name, :id),
           categories: AuditEvent.distinct.pluck(:event_category).compact.sort,
           usernames: AuditEvent.distinct.pluck(:username).compact.sort,
           object_types: AuditEvent.distinct.pluck(:object_type).compact.sort,
@@ -38,11 +40,12 @@ class AuditEventsController < ApplicationController
 
   def generate_csv(events)
     CSV.generate(headers: true) do |csv|
-      csv << [ "Timestamp", "Severity", "Event Type", "Category", "Object Type",
+      csv << [ "Timestamp", "vCenter", "Severity", "Event Type", "Category", "Object Type",
               "Object Name", "User", "Message", "Old Value", "New Value" ]
-      events.find_each do |event|
+      events.includes(:vcenter_connection).find_each do |event|
         csv << [
           event.event_timestamp&.iso8601,
+          event.vcenter_connection&.name,
           event.severity,
           event.event_type,
           event.event_category,

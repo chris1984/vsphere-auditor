@@ -1,0 +1,60 @@
+<%= form_with(model: @connection, class: "alert-form") do |f| %>
+  <% if @connection.errors.any? %>
+    <div class="card" style="border-color: var(--danger); margin-bottom: 15px;">
+      <div class="card-body">
+        <% @connection.errors.full_messages.each do |msg| %>
+          <p style="color: var(--danger); margin: 0;"><%= msg %></p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="card">
+    <div class="card-header">Connection Details</div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <%= f.label :name, "Display Name" %>
+          <%= f.text_field :name, placeholder: "e.g., Production vCenter" %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :host, "Hostname / IP" %>
+          <%= f.text_field :host, placeholder: "vcenter.example.com" %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :username, "Username" %>
+          <%= f.text_field :username, placeholder: "administrator@vsphere.local" %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :password, "Password" %>
+          <%= f.password_field :password, placeholder: @connection.persisted? ? "(unchanged)" : "" %>
+          <% if @connection.persisted? %>
+            <span class="form-hint">Leave blank to keep current password</span>
+          <% end %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :insecure, class: "checkbox-label" do %>
+            <%= f.check_box :insecure %>
+            Allow self-signed certificates
+          <% end %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :enabled, class: "checkbox-label" do %>
+            <%= f.check_box :enabled %>
+            Enabled
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 15px;">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", vcenter_connections_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
