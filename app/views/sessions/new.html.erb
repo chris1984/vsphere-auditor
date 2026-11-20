@@ -1,0 +1,30 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>vSphere Auditor</h1>
+      <p>Sign in to continue</p>
+    </div>
+
+    <% if flash[:alert] %>
+      <div class="login-alert"><%= flash[:alert] %></div>
+    <% end %>
+
+    <% if flash[:notice] %>
+      <div class="login-notice"><%= flash[:notice] %></div>
+    <% end %>
+
+    <%= form_tag(login_path, method: :post, class: "login-form") do %>
+      <div class="login-field">
+        <%= label_tag :username, "Username" %>
+        <%= text_field_tag :username, nil, autofocus: true, autocomplete: "username" %>
+      </div>
+
+      <div class="login-field">
+        <%= label_tag :password, "Password" %>
+        <%= password_field_tag :password, nil, autocomplete: "current-password" %>
+      </div>
+
+      <%= submit_tag "Sign In", class: "login-btn" %>
+    <% end %>
+  </div>
+</div>

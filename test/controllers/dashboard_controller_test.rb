@@ -15,17 +15,12 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "index requires auth when configured" do
+  test "index redirects to login when auth configured" do
     ENV["AUTH_USERNAME"] = "admin"
     ENV["AUTH_PASSWORD"] = "secret"
 
     get root_path
-    assert_response :unauthorized
-
-    get root_path, headers: {
-      "HTTP_AUTHORIZATION" => ActionController::HttpAuthentication::Basic.encode_credentials("admin", "secret")
-    }
-    assert_response :success
+    assert_redirected_to login_path
   ensure
     ENV.delete("AUTH_USERNAME")
     ENV.delete("AUTH_PASSWORD")

@@ -3,16 +3,23 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
 
   before_action :authenticate
+  helper_method :logged_in?, :current_username
 
   private
 
   def authenticate
     return unless auth_configured?
+    return if logged_in?
 
-    authenticate_or_request_with_http_basic("vSphere Auditor") do |username, password|
-      ActiveSupport::SecurityUtils.secure_compare(username, ENV["AUTH_USERNAME"]) &
-        ActiveSupport::SecurityUtils.secure_compare(password, ENV["AUTH_PASSWORD"])
-    end
+    redirect_to login_path
+  end
+
+  def logged_in?
+    session[:authenticated] == true
+  end
+
+  def current_username
+    session[:username]
   end
 
   def auth_configured?
