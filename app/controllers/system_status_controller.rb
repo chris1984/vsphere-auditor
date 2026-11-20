@@ -28,7 +28,7 @@ class SystemStatusController < ApplicationController
 
     checks[:solid_queue] = check_solid_queue
 
-    checks[:vcenter] = check_vcenter
+    checks[:vcenters] = check_vcenters
 
     checks
   end
@@ -51,18 +51,23 @@ class SystemStatusController < ApplicationController
     { status: :warning, detail: e.message.truncate(100) }
   end
 
-  def check_vcenter
-    require "rbvmomi"
-    vim = RbVmomi::VIM.connect(
-      host: ENV["VCENTER_HOST"],
-      user: ENV["VCENTER_USER"],
-      password: ENV["VCENTER_PASSWORD"],
-      insecure: ENV.fetch("VCENTER_INSECURE", "true") == "true"
-    )
-    about = vim.serviceContent.about
-    detail = about.fullName.to_s
-    vim.close
-    { status: :ok, detail: detail }
+  def check_vcenters
+    connections = VcenterConnection.all
+    return { status: :warning, detail: "No vCenter connections configured" } if connections.empty?
+
+    active = connections.select(&:enabled?)
+    ok_count = active.count { |c| c.status == :ok }
+    error_count = active.count { |c| c.status == :error }
+
+    details = connections.map { |c| "#{c.name}: #{c.status}" }.join(", ")
+
+    if error_count > 0
+      { status: :error, detail: "#{error_count} error(s) — #{details}" }
+    elsif ok_count == active.count && active.any?
+      { status: :ok, detail: "#{ok_count} connection(s) OK — #{details}" }
+    else
+      { status: :warning, detail: details }
+    end
   rescue => e
     { status: :error, detail: e.message.truncate(100) }
   end
