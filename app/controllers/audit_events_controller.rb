@@ -6,6 +6,7 @@ class AuditEventsController < ApplicationController
   def index
     events = AuditEvent
       .search(params[:q])
+      .by_pinned(params[:pinned])
       .by_vcenter(params[:vcenter])
       .by_category(params[:category])
       .by_username(params[:username])
@@ -24,6 +25,7 @@ class AuditEventsController < ApplicationController
           object_types: AuditEvent.distinct.pluck(:object_type).compact.sort,
           severities: AuditEvent::SEVERITIES
         }
+        @pinned_count = AuditEvent.pinned.count
       end
       format.csv do
         filename = "audit_events_#{Date.current.iso8601}.csv"
@@ -36,15 +38,23 @@ class AuditEventsController < ApplicationController
     @event = AuditEvent.find(params[:id])
   end
 
+  def toggle_pin
+    @event = AuditEvent.find(params[:id])
+    @event.update!(pinned: !@event.pinned?)
+    redirect_back fallback_location: audit_event_path(@event),
+                  notice: @event.pinned? ? "Event pinned." : "Event unpinned."
+  end
+
   private
 
   def generate_csv(events)
     CSV.generate(headers: true) do |csv|
-      csv << [ "Timestamp", "vCenter", "Severity", "Event Type", "Category", "Object Type",
+      csv << [ "Timestamp", "Pinned", "vCenter", "Severity", "Event Type", "Category", "Object Type",
               "Object Name", "User", "Message", "Old Value", "New Value" ]
       events.includes(:vcenter_connection).find_each do |event|
         csv << [
           event.event_timestamp&.iso8601,
+          event.pinned? ? "Yes" : "No",
           event.vcenter_connection&.name,
           event.severity,
           event.event_type,

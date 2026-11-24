@@ -386,6 +386,33 @@ tr:hover td {
   color: var(--text);
 }
 
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Pin toggle */
+.pin-cell {
+  width: 30px;
+  text-align: center;
+  padding: 8px 4px !important;
+}
+
+.pin-toggle {
+  text-decoration: none;
+  font-size: 16px;
+  color: var(--border);
+  transition: color 0.15s;
+}
+
+.pin-toggle:hover {
+  color: var(--warning);
+}
+
+.pin-toggle.pinned {
+  color: var(--warning);
+}
+
 /* Detail view */
 .detail-grid {
   display: grid;

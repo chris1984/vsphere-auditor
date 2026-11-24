@@ -1,11 +1,23 @@
 <div class="page-header">
   <h1>Event Detail</h1>
-  <p><%= link_to "Back to Events", audit_events_path %></p>
+  <p>
+    <%= link_to "Back to Events", audit_events_path %>
+    &bull;
+    <%= link_to @event.pinned? ? "Unpin Event" : "Pin Event",
+        toggle_pin_audit_event_path(@event),
+        data: { turbo_method: :post },
+        class: "btn #{@event.pinned? ? 'btn-primary' : 'btn-secondary'} btn-sm" %>
+  </p>
 </div>
 
 <div class="card">
   <div class="card-body">
     <dl class="detail-grid">
+      <% if @event.pinned? %>
+        <dt>Pinned</dt>
+        <dd><span class="badge badge-info">PINNED</span></dd>
+      <% end %>
+
       <% if @event.vcenter_connection %>
         <dt>vCenter</dt>
         <dd><%= @event.vcenter_connection.display_name %></dd>
