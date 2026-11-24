@@ -66,7 +66,7 @@
       <tbody>
         <% @events.each do |event| %>
           <tr>
-            <td class="pin-cell"><%= link_to(event.pinned? ? "&#9733;" : "&#9734;", toggle_pin_audit_event_path(event), data: { turbo_method: :post }, class: "pin-toggle #{event.pinned? ? 'pinned' : ''}").html_safe %></td>
+            <td class="pin-cell"><%= link_to((event.pinned? ? "&#9733;" : "&#9734;").html_safe, toggle_pin_audit_event_path(event), data: { turbo_method: :post }, class: "pin-toggle #{event.pinned? ? 'pinned' : ''}") %></td>
             <td><%= event.event_timestamp&.strftime("%Y-%m-%d %H:%M:%S") %></td>
             <td><%= severity_badge(event.severity) %></td>
             <td><%= link_to event.event_type, audit_event_path(event) %></td>
