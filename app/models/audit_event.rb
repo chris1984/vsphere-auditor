@@ -43,6 +43,8 @@ class AuditEvent < ApplicationRecord
 
   SEVERITIES = %w[info warning error critical].freeze
 
+  scope :pinned, -> { where(pinned: true) }
+  scope :by_pinned, ->(val) { where(pinned: true) if val == "1" }
   scope :by_vcenter, ->(id) { where(vcenter_connection_id: id) if id.present? }
   scope :by_category, ->(cat) { where(event_category: cat) if cat.present? }
   scope :by_username, ->(user) { where(username: user) if user.present? }

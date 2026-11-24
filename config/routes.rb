@@ -4,7 +4,11 @@ Rails.application.routes.draw do
   delete "logout", to: "sessions#destroy"
 
   root "dashboard#index"
-  resources :audit_events, only: %i[index show]
+  resources :audit_events, only: %i[index show] do
+    member do
+      post :toggle_pin
+    end
+  end
   resources :alert_rules
   resources :vcenter_connections do
     member do

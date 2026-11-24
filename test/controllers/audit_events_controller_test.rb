@@ -55,4 +55,32 @@ class AuditEventsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".detail-grid"
   end
+
+  test "toggle_pin pins an unpinned event" do
+    assert_not @event.pinned?
+    post toggle_pin_audit_event_path(@event)
+    assert @event.reload.pinned?
+    assert_redirected_to audit_event_path(@event)
+  end
+
+  test "toggle_pin unpins a pinned event" do
+    @event.update!(pinned: true)
+    post toggle_pin_audit_event_path(@event)
+    assert_not @event.reload.pinned?
+  end
+
+  test "index filters by pinned" do
+    pinned = create_event(pinned: true)
+    unpinned = create_event(pinned: false)
+
+    get audit_events_path(pinned: "1")
+    assert_response :success
+  end
+
+  test "CSV includes pinned column" do
+    @event.update!(pinned: true)
+    get audit_events_path(format: :csv)
+    assert_includes response.body, "Pinned"
+    assert_includes response.body, "Yes"
+  end
 end
